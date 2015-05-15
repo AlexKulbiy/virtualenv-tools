@@ -183,9 +183,12 @@ def update_paths(base, new_path):
         print 'error: %s does not refer to a python installation' % base
         return False
 
+    easy_install_pth = os.path.join(base_lib_dir,lib_name,'site-packages','easy-install.pth')
+
     update_scripts(bin_dir, new_path)
     update_pycs(lib_dir, new_path, lib_name)
     update_local(base, new_path)
+    update_pth_files(easy_install_pth, new_path)
 
     return True
 
@@ -234,6 +237,28 @@ def reinitialize_virtualenv(path):
     args.append(path)
     subprocess.Popen(args, env=new_env).wait()
 
+def update_pth_files(filename, new_path):
+    """Updates easy_install.pth files with new path
+    This file is created when we use 'editable' form of packages installation
+    We need to add path to src directory of virtualenv
+    """
+    with open(filename) as f:
+        lines = list(f)
+    if not lines:
+        return
+
+    # Assume that all lines that don't start with import are paths
+    # Assume that module name is located after last src/ directory in path
+    for number,line in enumerate(lines):
+        if not line.startswith('import'):
+            module_directory = line.split('src')[-1]
+            # Cut leading slash from path
+            module_directory = module_directory[1:]
+            lines[number] = os.path.join(new_path, 'src', module_directory)
+
+    print 'S %s' % filename
+    with open(filename, 'w') as f:
+        f.writelines(lines)
 
 def main():
     parser = optparse.OptionParser()
