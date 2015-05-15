@@ -188,7 +188,8 @@ def update_paths(base, new_path):
     update_scripts(bin_dir, new_path)
     update_pycs(lib_dir, new_path, lib_name)
     update_local(base, new_path)
-    update_pth_files(easy_install_pth, new_path)
+    if os.path.isfile(easy_install_pth):
+        update_pth_files(easy_install_pth, new_path)
 
     return True
 
